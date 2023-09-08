@@ -1,20 +1,47 @@
-import { fetchMealById } from "./fetch-handlers";
+import { fetchCategories, fetchMealById, fetchMealsByCategory } from './fetch-handlers';
 
-
-export function renderStencil() {
+export async function renderApp() {
   document.querySelector('#app').innerHTML = `
     <div>
       <h1>Meal Time!</h1>
+      <select id="category" name="category"></select>
       <div id="meals"></div>
       <p id="error"></p>
     </div>
     <div id='recipeOverlay' class='hidden'>
     </div>
   `
+
+  const [categories, categoriesError] = await fetchCategories();
+  if (categoriesError) {
+    console.log(categoriesError);
+  }
+  categories.forEach(renderCategoryOption);
+
+  renderMealsByCategory(categories[0].strCategory);
+
+  document.querySelector('#category').addEventListener('change', (e) => {
+    renderMealsByCategory(e.target.value);
+  })
+}
+
+export async function renderMealsByCategory(category) {
+  document.querySelector("#meals").innerHTML = "";
+  const [meals, mealsError] = await fetchMealsByCategory(category);
+  if (mealsError) {
+    console.log(mealsError);
+  }
+  meals.forEach(renderMeal);
+}
+
+export function renderCategoryOption(category) {
+  const option = document.createElement("option");
+  option.value = category.strCategory;
+  option.innerText = category.strCategory;
+  document.querySelector("#category").append(option);
 }
 
 export function renderMeal(meal) {
-  const mealsContainer = document.querySelector("#meals");
   const mealDiv = document.createElement("div");
   mealDiv.className = "mealCard";
   mealDiv.innerHTML = `
@@ -24,7 +51,7 @@ export function renderMeal(meal) {
   mealDiv.addEventListener('click', () => {
     renderMealRecipe(meal.idMeal);
   });
-  mealsContainer.append(mealDiv);
+  document.querySelector("#meals").append(mealDiv);
 }
 
 async function renderMealRecipe(idMeal) {
