@@ -1,4 +1,5 @@
 import { fetchCategories, fetchMealById, fetchMealsByCategory } from './fetch-handlers';
+import bookmarks, { bookmark, isBookmarked, unbookmark } from './store';
 
 export async function renderApp() {
   document.querySelector('#app').innerHTML = `
@@ -56,23 +57,23 @@ export function renderMeal(meal) {
 
 async function renderMealRecipe(idMeal) {
   const [meal, error] = await fetchMealById(idMeal);
-  document.querySelector("#recipeOverlay").innerHTML = `
+  const recipeOverlay = document.querySelector("#recipeOverlay");
+  recipeOverlay.innerHTML = `
     <div id="recipeOverlayContents">
-      <div id="closeOverlayContainer">
+      <div id="overlayHeader">
         <button id="closeOverlayButton">X</button>
-      </div>
+        <button id="bookmarkButton" class="${isBookmarked(idMeal) ? "bookmarked" : ""}">♡</button>
+        </div>
       <h2>${meal.strMeal}</h2>
       <div id="overlayImageAndIngredients">
-        <ul id="overlayIngredientsContainer">
-
-        </ul>
+        <ul id="overlayIngredientsContainer"></ul>
         <div id="overlayImageContainer">
           <img src="${meal.strMealThumb}">
         </div>
       </div>
       <p id="recipeInstructions">${meal.strInstructions}</p>
     </div>
-  `
+  `;
 
   let ingredientNum = 1;
   let ingredient = meal[`strIngredient${ingredientNum}`];
@@ -87,9 +88,20 @@ async function renderMealRecipe(idMeal) {
     amount = meal[`strMeasure${ingredientNum}`];
   }
 
-  document.querySelector("#recipeOverlay").className = "visible"
+  recipeOverlay.className = "visible"
 
   document.querySelector("#closeOverlayButton").addEventListener('click', () => {
-    document.querySelector("#recipeOverlay").className = "hidden";
+    recipeOverlay.className = "hidden";
   });
+
+  const bookmarkButton = document.querySelector("#bookmarkButton")
+  bookmarkButton.addEventListener('click', () => {
+    bookmarkButton.className = isBookmarked(idMeal) ? "" : "bookmarked";
+    if (!isBookmarked(idMeal)) {
+      bookmark(idMeal);
+    } else {
+      unbookmark(idMeal);
+    }
+    console.log(bookmarks);
+  })
 }
